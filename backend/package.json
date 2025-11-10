@@ -1,0 +1,33 @@
+{
+    "name": "backend",
+    "version": "1.0.0",
+    "description": "",
+    "main": "server.js",
+    "type": "module",
+    "scripts": {
+        "start": "node server.js",
+        "dev": "nodemon server.js",
+        "seed": "node database/seedBph.js",
+        "seed-devisi": "node database/seedDevisi.js",
+        "seed-team": "node database/seedTeam.js",
+        "seed-news": "node database/seedNews.js",
+        "seed-article": "node database/seedArticle.js",
+        "seed-gallery": "node database/seedGallery.js",
+        "seed-visimisi": "node database/seedVisiMisi.js",
+        "seed-all": "node database/seedBph.js && node database/seedDevisi.js && node database/seedTeam.js && node database/seedNews.js && node database/seedArticle.js && node database/seedGallery.js && node database/seedVisiMisi.js"
+    },
+    "keywords": [],
+    "author": "",
+    "license": "ISC",
+    "dependencies": {
+        "cors": "^2.8.5",
+        "dotenv": "^17.2.3",
+        "express": "^5.1.0",
+        "mongoose": "^8.19.3",
+        "multer": "^2.0.2",
+        "socket.io": "^4.8.1"
+    },
+    "devDependencies": {
+        "nodemon": "^3.1.10"
+    }
+}

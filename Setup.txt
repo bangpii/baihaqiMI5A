@@ -1,0 +1,50 @@
+FrontEnd : 
+
+Install Node JS : https://nodejs.org
+
+PATH            : BaihaqieArrafi_MI5A/frontend
+Run FrontEnd    : npm run dev
+tool FrontEnd   : Vite, js, html, css
+Framwork        : React + Tailwind
+
+
+
+
+
+BackEnd :
+Install MangoDB : https://www.mongodb.com/try/download/community
+
+| **Sistem Operasi**           | **Langkah-langkah Mengaktifkan MongoDB Otomatis**                                                                                                                                                               | **Perintah / Cara Cepat**                                                                  |
+| ---------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| 🪟 **Windows**               | 1. Buka **Services (services.msc)**<br>2. Cari **MongoDB** di daftar layanan<br>3. Klik kanan → **Properties**<br>4. Pada “Startup type”, pilih **Automatic**<br>5. Klik **Apply** → **Start**                  | Jalankan manual: <br>`net start MongoDB`<br>Hentikan: <br>`net stop MongoDB`               |
+| 🐧 **Linux (Ubuntu/Debian)** | 1. Aktifkan layanan agar otomatis saat booting:<br>`sudo systemctl enable mongod`<br>2. Jalankan MongoDB sekarang:<br>`sudo systemctl start mongod`<br>3. Cek status MongoDB:<br>`sudo systemctl status mongod` | Hentikan: <br>`sudo systemctl stop mongod`<br>Restart: <br>`sudo systemctl restart mongod` |
+
+
+PATH         : BaihaqieArrafi_MI5A/backend
+Run backend  : server node.js
+
+Run All Seed : npm run seed-all
+
+Run One Seed : node database/seedBph.js  
+               node database/seedDevisi.js
+               node database/seedTeam.js
+               node database/seedArticle.js
+               node database/seedNews.js
+               node database/seedGallery.js
+
+| Koleksi     | URL untuk Lihat Semua Data                                               |
+| ----------- | ------------------------------------------------------------------------ |
+| 👥 BPH      | [http://localhost:5000/api/bph](http://localhost:5000/api/bph)           |
+| 🏢 Devisi   | [http://localhost:5000/api/devisi](http://localhost:5000/api/devisi)     |
+| 👨‍💼 Team     | [http://localhost:5000/api/team](http://localhost:5000/api/team)         |
+| 📰 News     | [http://localhost:5000/api/news](http://localhost:5000/api/news)         |
+| 🖼️ Gallery  | [http://localhost:5000/api/gallery](http://localhost:5000/api/gallery)   |
+| 🎯 VisiMisi | [http://localhost:5000/api/visimisi](http://localhost:5000/api/visimisi) |
+| 📝 Article  | [http://localhost:5000/api/articles](http://localhost:5000/api/articles) |
+
+
+tool BackEnd   : node JS
+Database       : MangoDB
+Framwork       : Express JS
+
+
