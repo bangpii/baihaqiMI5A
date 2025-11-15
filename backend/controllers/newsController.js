@@ -65,21 +65,44 @@ export const getNewsById = async (req, res) => {
     }
 };
 
-// 🔹 Create new News with image upload - AUTO INCREMENT ID
+// 🔹 Create new News with image upload - FIXED VERSION
 export const createNews = async (req, res) => {
     try {
+        console.log('🆕 Creating new news with body:', req.body);
+        console.log('🖼️ File received:', req.file);
+
+        // Manual ID generation sebagai fallback
+        const lastNews = await News.findOne().sort({
+            id: -1
+        });
+        let nextId = lastNews ? lastNews.id + 1 : 1000;
+
+        console.log(`🎯 Using manual ID: ${nextId}`);
+
+        // 🔹 BUILD DATA
         const newsData = {
-            ...req.body
+            id: nextId, // Manual ID untuk menghindari auto-increment issues
+            title: req.body.title,
+            desk: req.body.desk,
+            tanggal: req.body.tanggal,
+            link: req.body.link,
+            kategori: req.body.kategori || 'NEWS'
         };
 
+        // 🔹 ONLY SET GAMBAR IF FILE EXISTS
         if (req.file) {
             newsData.gambar = "/public/news/" + req.file.filename;
         }
+        // 🔹 Jika tidak ada file, biarkan gambar undefined/tidak ada
+
+        console.log('📦 News data to save:', newsData);
 
         const newNews = new News(newsData);
         await newNews.save();
 
-        // 🔹 EMIT REAL-TIME UPDATE
+        console.log('✅ News created successfully:', newNews);
+
+        // Real-time update
         const allNews = await News.find().sort({
             id: 1
         });
@@ -87,13 +110,14 @@ export const createNews = async (req, res) => {
 
         res.status(201).json(newNews);
     } catch (err) {
+        console.error('❌ Error creating news:', err);
         res.status(400).json({
             error: err.message
         });
     }
 };
 
-// 🔹 Update News
+// 🔹 Update News - FIXED
 export const updateNews = async (req, res) => {
     try {
         const {
@@ -109,16 +133,27 @@ export const updateNews = async (req, res) => {
             });
         }
 
+        const updateData = {
+            title: req.body.title,
+            desk: req.body.desk,
+            tanggal: req.body.tanggal,
+            link: req.body.link,
+            kategori: req.body.kategori || 'NEWS'
+        };
+
         // Jika ada file upload baru, hapus file lama
         if (req.file) {
             deleteImageFile(news.gambar);
-            req.body.gambar = "/public/news/" + req.file.filename;
+            updateData.gambar = "/public/news/" + req.file.filename;
+        } else if (req.body.gambar !== undefined) {
+            // Jika gambar dikirim via body (bisa string atau null)
+            updateData.gambar = req.body.gambar;
         }
 
         const updatedNews = await News.findOneAndUpdate({
                 id: parseInt(id)
             },
-            req.body, {
+            updateData, {
                 new: true
             }
         );

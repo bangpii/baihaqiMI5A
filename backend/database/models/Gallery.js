@@ -19,9 +19,8 @@ const gallerySchema = new mongoose.Schema({
     },
     gambar: {
         type: String,
-        required: true
+        required: false // 🔹 UBAH MENJADI FALSE - biarkan optional
     },
-
     kategori: {
         type: String,
         required: true,
@@ -31,25 +30,31 @@ const gallerySchema = new mongoose.Schema({
     timestamps: true
 });
 
-// 🔹 Middleware untuk auto increment ID sebelum save
+// Middleware untuk auto increment ID
 gallerySchema.pre('save', async function(next) {
     if (this.isNew) {
         try {
-            const counter = await Counter.findByIdAndUpdate({
+            let counter = await Counter.findOne({
                 _id: 'galleryId'
-            }, {
-                $inc: {
-                    seq: 1
-                }
-            }, {
-                new: true,
-                upsert: true
             });
+
+            if (!counter) {
+                counter = new Counter({
+                    _id: 'galleryId',
+                    seq: 1000
+                });
+            } else {
+                counter.seq += 1;
+            }
+
+            await counter.save();
             this.id = counter.seq;
-            console.log(`🎯 Auto increment Gallery id: ${this.id}`);
         } catch (error) {
-            console.error('❌ Error auto increment Gallery:', error);
-            return next(error);
+            // Fallback manual
+            const lastDoc = await mongoose.model('Gallery').findOne().sort({
+                id: -1
+            });
+            this.id = lastDoc ? lastDoc.id + 1 : 1000;
         }
     }
     next();

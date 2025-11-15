@@ -18,7 +18,8 @@ const Team = () => {
     position: '',
     prodi: '',
     image: '',
-    divisi: ''
+    divisi: '',
+    kategori: 'TIM' // Default value untuk kategori
   })
   const [editingId, setEditingId] = useState(null)
   const [socket, setSocket] = useState(null)
@@ -35,7 +36,10 @@ const Team = () => {
         }
         const data = await response.json()
         console.log('✅ Team data received:', data)
-        setDataTable(data)
+        
+        // Filter hanya data dengan kategori TIM
+        const timData = data.filter(item => item.kategori === "TIM")
+        setDataTable(timData)
       } catch (error) {
         console.error('❌ Error fetching Team data:', error)
         alert('Gagal memuat data Team: ' + error.message)
@@ -71,7 +75,9 @@ const Team = () => {
 
     const handleTeamUpdate = (data) => {
       console.log('🔄 Realtime Team update received:', data)
-      setDataTable(data)
+      // Filter hanya data dengan kategori TIM
+      const timData = data.filter(item => item.kategori === "TIM")
+      setDataTable(timData)
     }
 
     const handleConnect = () => {
@@ -110,7 +116,8 @@ const Team = () => {
       position: '',
       prodi: '',
       image: '',
-      divisi: ''
+      divisi: '',
+      kategori: 'TIM' // Default untuk data baru
     })
     setSelectedImage(null)
     setImagePreview(null)
@@ -129,7 +136,8 @@ const Team = () => {
       position: member.position,
       prodi: member.prodi,
       image: member.image || '',
-      divisi: member.divisi || ''
+      divisi: member.divisi || '',
+      kategori: member.kategori || 'TIM' // Pastikan kategori ada
     })
     setEditingId(member.id)
     setSelectedImage(null)
@@ -148,7 +156,8 @@ const Team = () => {
       position: '',
       prodi: '',
       image: '',
-      divisi: ''
+      divisi: '',
+      kategori: 'TIM' // Reset ke default
     })
     setSelectedImage(null)
     setImagePreview(null)
@@ -191,9 +200,9 @@ const Team = () => {
     try {
       const submitData = new FormData()
       
-      // Append form data
+      // Append form data - termasuk kategori
       Object.keys(formData).forEach(key => {
-        if (formData[key]) {
+        if (formData[key] !== null && formData[key] !== undefined) {
           submitData.append(key, formData[key])
           console.log(`📦 Team form data - ${key}:`, formData[key])
         }
@@ -387,6 +396,9 @@ const Team = () => {
                     Divisi
                   </th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider font-poppins border-b sticky top-0 bg-gray-50 z-10">
+                    Kategori
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider font-poppins border-b sticky top-0 bg-gray-50 z-10">
                     Gambar
                   </th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider font-poppins border-b sticky top-0 bg-gray-50 z-10">
@@ -404,6 +416,7 @@ const Team = () => {
                     <td className="px-4 py-3 text-sm text-gray-600 font-poppins">{item.position}</td>
                     <td className="px-4 py-3 text-sm text-gray-600 font-poppins">{item.prodi}</td>
                     <td className="px-4 py-3 text-sm text-gray-600 font-poppins">{item.divisi}</td>
+                    <td className="px-4 py-3 text-sm text-gray-600 font-poppins">{item.kategori}</td>
                     <td className="px-4 py-3 text-sm text-gray-600 font-poppins">
                       <div className="w-10 h-10 bg-gray-200 rounded-lg flex items-center justify-center overflow-hidden">
                         <img 
@@ -633,6 +646,23 @@ const Team = () => {
                     placeholder="Masukkan nama divisi"
                     required
                   />
+                </div>
+
+                {/* Kategori */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 font-poppins mb-2">
+                    Kategori
+                  </label>
+                  <select 
+                    name="kategori"
+                    value={formData.kategori}
+                    onChange={handleInputChange}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent font-poppins"
+                    required
+                  >
+                    <option value="TIM">TIM</option>
+                    <option value="ANGGOTA">ANGGOTA</option>
+                  </select>
                 </div>
               </div>
 

@@ -76,9 +76,15 @@ const Gallery = () => {
       socket.emit('join_gallery_room')
     }
 
+    const handleError = (error) => {
+      console.error('❌ Socket.io error:', error)
+    }
+
     // Event listeners
     socket.on('connect', handleConnect)
     socket.on('gallery_updated', handleGalleryUpdate)
+    socket.on('error', handleError)
+    socket.on('connect_error', handleError)
 
     // Jika sudah connected, langsung join room
     if (socket.connected) {
@@ -89,6 +95,8 @@ const Gallery = () => {
       console.log('🧹 Cleaning up Socket.io listeners...')
       socket.off('connect', handleConnect)
       socket.off('gallery_updated', handleGalleryUpdate)
+      socket.off('error', handleError)
+      socket.off('connect_error', handleError)
     }
   }, [socket])
 
@@ -122,13 +130,24 @@ const Gallery = () => {
     })
     setEditingId(gallery.id)
     setSelectedImage(null)
-    setImagePreview(gallery.gambar ? `http://localhost:5000${gallery.gambar}` : null)
+    
+    // Set image preview - handle jika gambar tidak ada
+    if (gallery.gambar) {
+      setImagePreview(`http://localhost:5000${gallery.gambar}`)
+    } else {
+      setImagePreview(null)
+    }
+    
     setShowModal(true)
   }
 
   const handleCloseModal = () => {
     console.log('❌ Closing modal')
     setShowModal(false)
+    // Cleanup image preview URL
+    if (imagePreview && imagePreview.startsWith('blob:')) {
+      URL.revokeObjectURL(imagePreview)
+    }
     setFormData({
       title: '',
       tanggal: '',
@@ -144,16 +163,54 @@ const Gallery = () => {
     const file = e.target.files[0]
     if (file) {
       console.log('🖼️ Image selected:', file.name)
+      
+      // Validasi file type
+      if (!file.type.startsWith('image/')) {
+        alert('Please select an image file')
+        return
+      }
+      
+      // Validasi file size (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        alert('File size should be less than 5MB')
+        return
+      }
+      
       setSelectedImage(file)
+      
+      // Cleanup previous blob URL
+      if (imagePreview && imagePreview.startsWith('blob:')) {
+        URL.revokeObjectURL(imagePreview)
+      }
+      
       const previewUrl = URL.createObjectURL(file)
       setImagePreview(previewUrl)
+      
+      // Update form data
+      setFormData(prev => ({
+        ...prev,
+        gambar: file.name
+      }))
     }
   }
 
   const handleRemoveImage = () => {
     console.log('🗑️ Removing image')
+    
+    // Cleanup blob URL
+    if (imagePreview && imagePreview.startsWith('blob:')) {
+      URL.revokeObjectURL(imagePreview)
+    }
+    
     setSelectedImage(null)
     setImagePreview(null)
+    
+    // Update form data
+    setFormData(prev => ({
+      ...prev,
+      gambar: ''
+    }))
+    
     const fileInput = document.getElementById('imageUpload')
     if (fileInput) {
       fileInput.value = ''
@@ -171,23 +228,45 @@ const Gallery = () => {
   const handleSubmit = async (e) => {
     e.preventDefault()
     
-    console.log('🚀 Submitting form:', { isEdit, editingId, formData, selectedImage })
+    console.log('🚀 Submitting form:', { 
+      isEdit, 
+      editingId, 
+      formData, 
+      selectedImage: selectedImage ? selectedImage.name : 'none' 
+    })
+    
+    // Validation
+    if (!formData.title.trim()) {
+      alert('Title is required')
+      return
+    }
+    
+    if (!formData.tanggal) {
+      alert('Date and time are required')
+      return
+    }
     
     try {
       const submitData = new FormData()
       
       // Append form data
-      Object.keys(formData).forEach(key => {
-        if (formData[key]) {
-          submitData.append(key, formData[key])
-          console.log(`📦 Form data - ${key}:`, formData[key])
-        }
+      submitData.append('title', formData.title.trim())
+      submitData.append('tanggal', formData.tanggal)
+      submitData.append('kategori', formData.kategori)
+      
+      console.log('📦 Form data prepared:', {
+        title: formData.title,
+        tanggal: formData.tanggal,
+        kategori: formData.kategori
       })
 
       // Append image if selected
       if (selectedImage) {
         submitData.append('gambar', selectedImage)
         console.log('📸 Image appended:', selectedImage.name)
+      } else if (isEdit && !formData.gambar) {
+        // Jika edit dan tidak ada gambar, set gambar ke string kosong
+        submitData.append('gambar', '')
       }
 
       let url, method
@@ -271,15 +350,38 @@ const Gallery = () => {
   // Format tanggal untuk display
   const formatDate = (dateString) => {
     if (!dateString) return '-'
-    const date = new Date(dateString)
-    return date.toLocaleDateString('id-ID', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    })
+    
+    try {
+      // Handle various date formats
+      let date;
+      if (dateString.includes('T')) {
+        date = new Date(dateString);
+      } else {
+        // Replace space with 'T' for ISO format
+        date = new Date(dateString.replace(' ', 'T'));
+      }
+      
+      return date.toLocaleDateString('id-ID', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    } catch (error) {
+      console.error('Error formatting date:', dateString, error)
+      return dateString
+    }
   }
+
+  // Cleanup effect untuk blob URLs
+  useEffect(() => {
+    return () => {
+      if (imagePreview && imagePreview.startsWith('blob:')) {
+        URL.revokeObjectURL(imagePreview)
+      }
+    }
+  }, [imagePreview])
 
   if (loading) {
     return (
@@ -451,7 +553,7 @@ const Gallery = () => {
               {/* Upload Gambar Section */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 font-poppins mb-2">
-                  Gambar Gallery
+                  Gambar Gallery {!isEdit && <span className="text-red-500">*</span>}
                 </label>
                 <div className="flex items-center space-x-4">
                   <div className="w-20 h-20 bg-gray-200 rounded-lg flex items-center justify-center overflow-hidden">
@@ -490,6 +592,9 @@ const Gallery = () => {
                         <span>Hapus</span>
                       </button>
                     )}
+                    <p className="text-xs text-gray-500 mt-1">
+                      Format: JPG, PNG, GIF (max 5MB)
+                    </p>
                   </div>
                 </div>
               </div>
@@ -498,7 +603,7 @@ const Gallery = () => {
                 {/* Title */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 font-poppins mb-2">
-                    Title
+                    Title <span className="text-red-500">*</span>
                   </label>
                   <input 
                     type="text" 
@@ -514,7 +619,7 @@ const Gallery = () => {
                 {/* Tanggal/Waktu */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 font-poppins mb-2">
-                    Tanggal & Waktu
+                    Tanggal & Waktu <span className="text-red-500">*</span>
                   </label>
                   <input 
                     type="datetime-local" 
@@ -524,6 +629,23 @@ const Gallery = () => {
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent font-poppins"
                     required
                   />
+                </div>
+
+                {/* Kategori */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 font-poppins mb-2">
+                    Kategori
+                  </label>
+                  <select 
+                    name="kategori"
+                    value={formData.kategori}
+                    onChange={handleInputChange}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent font-poppins"
+                  >
+                    <option value="GALLERY">GALLERY</option>
+                    <option value="EVENT">EVENT</option>
+                    <option value="ACTIVITY">ACTIVITY</option>
+                  </select>
                 </div>
               </div>
 
